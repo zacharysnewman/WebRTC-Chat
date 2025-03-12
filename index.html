@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC Messaging</title>
+</head>
+<body>
+  <h2>WebRTC Messaging</h2>
+
+  <div>
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+  </div>
+
+  <h3>Messages</h3>
+  <div id="messages"></div>
+
+  <textarea id="messageInput" placeholder="Type a message..." rows="4" cols="50"></textarea>
+  <br>
+  <button onclick="sendMessage()">Send Message</button>
+
+  <button onclick="start()">Start</button>
+  <button onclick="call()">Call</button>
+  <button onclick="hangup()">Hang up</button>
+
+  <script src="webrtc.js"></script>
+</body>
+</html>
