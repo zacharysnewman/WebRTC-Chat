@@ -3,27 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebRTC Messaging</title>
+  <title>WebRTC Text Chat</title>
 </head>
 <body>
-  <h2>WebRTC Messaging</h2>
-
-  <div>
-    <video id="localVideo" autoplay muted></video>
-    <video id="remoteVideo" autoplay></video>
-  </div>
+  <h2>WebRTC Peer-to-Peer Chat</h2>
 
   <h3>Messages</h3>
-  <div id="messages"></div>
+  <div id="messages" style="border:1px solid #ccc; padding:10px; width:300px; height:150px; overflow-y:auto;"></div>
 
-  <textarea id="messageInput" placeholder="Type a message..." rows="4" cols="50"></textarea>
+  <textarea id="messageInput" placeholder="Type a message..." rows="2" cols="40"></textarea>
   <br>
-  <button onclick="sendMessage()">Send Message</button>
+  <button onclick="sendMessage()">Send</button>
 
-  <button onclick="start()">Start</button>
-  <button onclick="call()">Call</button>
-  <button onclick="hangup()">Hang up</button>
+  <br><br>
+  <button onclick="startConnection()">Start Connection</button>
+  <button onclick="call()">Connect</button>
+  <button onclick="hangup()">Disconnect</button>
 
-  <script src="webrtc.js"></script>
+  <script src="webrtc.js" version="0.0.1"></script>
 </body>
 </html>
