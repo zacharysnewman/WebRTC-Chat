@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebRTC Text Chat</title>
+  <title>WebRTC Debug Chat</title>
 </head>
 <body>
   <h2>WebRTC Peer-to-Peer Chat</h2>
+
+  <h3>Connection Status: <span id="connectionStatus">Not Connected</span></h3>
+  <h3>Data Channel Status: <span id="dataChannelStatus">Not Available</span></h3>
+  <h3>ICE Candidate Exchange: <span id="iceStatus">No ICE Candidates Yet</span></h3>
 
   <h3>Messages</h3>
   <div id="messages" style="border:1px solid #ccc; padding:10px; width:300px; height:150px; overflow-y:auto;"></div>
@@ -20,6 +24,6 @@
   <button onclick="call()">Connect</button>
   <button onclick="hangup()">Disconnect</button>
 
-  <script src="webrtc.js" version="0.0.1"></script>
+  <script src="webrtc.js" version="0.0.2></script>
 </body>
 </html>
