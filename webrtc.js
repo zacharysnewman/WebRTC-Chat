@@ -1,35 +1,21 @@
-let localStream;
 let localPeerConnection;
 let remotePeerConnection;
 let localDataChannel;
 let remoteDataChannel;
 
-let localVideo = document.getElementById('localVideo');
-let remoteVideo = document.getElementById('remoteVideo');
 let messageInput = document.getElementById('messageInput');
 let messagesDiv = document.getElementById('messages');
 
 const iceServers = [
-  { urls: "stun:stun.l.google.com:19302" }
+  { urls: "stun:stun.l.google.com:19302" } // Google's public STUN server
 ];
 
-// Function to start media capture (camera and mic)
-async function start() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    localStream = stream;
-    localVideo.srcObject = stream;
-  } catch (error) {
-    console.error("Error accessing media devices.", error);
-  }
-}
-
-// Create peer connection and set up data channel
-function createPeerConnection() {
+// Create peer connections and setup data channels
+function startConnection() {
   localPeerConnection = new RTCPeerConnection({ iceServers });
   remotePeerConnection = new RTCPeerConnection({ iceServers });
 
-  // Handle ICE candidate exchange
+  // Handle ICE Candidate exchange
   localPeerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       remotePeerConnection.addIceCandidate(event.candidate);
@@ -41,77 +27,71 @@ function createPeerConnection() {
     }
   };
 
-  // Display remote video stream
-  remotePeerConnection.ontrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
-  };
-
-  // Add local media stream to the peer connection
-  localStream.getTracks().forEach(track => localPeerConnection.addTrack(track, localStream));
-
-  // Create data channel for sending messages
+  // Create data channel for chat
   localDataChannel = localPeerConnection.createDataChannel("chat");
-  localDataChannel.onmessage = (event) => {
-    displayMessage('Remote: ' + event.data);
-  };
 
-  // Set up the remote data channel to handle incoming messages
+  // Open and handle messages
+  localDataChannel.onopen = () => console.log("Data channel open!");
+  localDataChannel.onmessage = (event) => displayMessage('Remote: ' + event.data);
+
+  // Set up the remote peer to listen for the data channel
   remotePeerConnection.ondatachannel = (event) => {
     remoteDataChannel = event.channel;
-    remoteDataChannel.onmessage = (event) => {
-      displayMessage('Remote: ' + event.data);
-    };
+
+    remoteDataChannel.onopen = () => console.log("Remote data channel open!");
+    remoteDataChannel.onmessage = (event) => displayMessage('Remote: ' + event.data);
   };
+
+  console.log("Peer connections and data channels created.");
 }
 
-// Display received messages
+// Send a message over WebRTC data channel
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (message && localDataChannel.readyState === 'open') {
+    localDataChannel.send(message);
+    displayMessage('You: ' + message);
+    messageInput.value = ''; // Clear input
+  } else {
+    console.warn("Data channel not open or empty message.");
+  }
+}
+
+// Display messages in the chat box
 function displayMessage(message) {
   const messageDiv = document.createElement('div');
   messageDiv.textContent = message;
   messagesDiv.appendChild(messageDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll
 }
 
-// Send a message over the data channel
-function sendMessage() {
-  const message = messageInput.value;
-  if (message && localDataChannel && localDataChannel.readyState === 'open') {
-    localDataChannel.send(message);
-    displayMessage('You: ' + message);
-    messageInput.value = ''; // Clear the input field
-  }
-}
-
-// Start the call (create offer and answer)
+// Start WebRTC connection (offer/answer exchange)
 async function call() {
-  createPeerConnection();
-  
   try {
-    // Create an offer
     const offer = await localPeerConnection.createOffer();
     await localPeerConnection.setLocalDescription(offer);
-
-    // Send the offer to the remote peer
     await remotePeerConnection.setRemoteDescription(offer);
 
-    // Create an answer
     const answer = await remotePeerConnection.createAnswer();
     await remotePeerConnection.setLocalDescription(answer);
-
-    // Send the answer back to the local peer
     await localPeerConnection.setRemoteDescription(answer);
+
+    console.log("WebRTC chat connection established.");
   } catch (error) {
-    console.error("Error during the call process", error);
+    console.error("Error setting up WebRTC connection:", error);
   }
 }
 
-// Hang up the call and clean up
+// Close connection
 function hangup() {
-  localPeerConnection.close();
-  remotePeerConnection.close();
+  if (localPeerConnection) localPeerConnection.close();
+  if (remotePeerConnection) remotePeerConnection.close();
+  
   localPeerConnection = null;
   remotePeerConnection = null;
   localDataChannel = null;
   remoteDataChannel = null;
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
+
+  console.log("Disconnected.");
 }
+
