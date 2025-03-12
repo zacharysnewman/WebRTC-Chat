@@ -5,6 +5,9 @@ let remoteDataChannel;
 
 let messageInput = document.getElementById('messageInput');
 let messagesDiv = document.getElementById('messages');
+let connectionStatus = document.getElementById('connectionStatus');
+let dataChannelStatus = document.getElementById('dataChannelStatus');
+let iceStatus = document.getElementById('iceStatus');
 
 const iceServers = [
   { urls: "stun:stun.l.google.com:19302" } // Google's public STUN server
@@ -12,6 +15,9 @@ const iceServers = [
 
 // Create peer connections and setup data channels
 function startConnection() {
+  connectionStatus.textContent = "Connecting...";
+  iceStatus.textContent = "Waiting for ICE Candidates...";
+
   localPeerConnection = new RTCPeerConnection({ iceServers });
   remotePeerConnection = new RTCPeerConnection({ iceServers });
 
@@ -19,6 +25,7 @@ function startConnection() {
   localPeerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       remotePeerConnection.addIceCandidate(event.candidate);
+      iceStatus.textContent = "ICE Candidate Exchanged ✅";
     }
   };
   remotePeerConnection.onicecandidate = (event) => {
@@ -31,14 +38,37 @@ function startConnection() {
   localDataChannel = localPeerConnection.createDataChannel("chat");
 
   // Open and handle messages
-  localDataChannel.onopen = () => console.log("Data channel open!");
+  localDataChannel.onopen = () => {
+    console.log("Data channel open!");
+    dataChannelStatus.textContent = "Open ✅";
+  };
+  
+  localDataChannel.onclose = () => {
+    console.log("Data channel closed!");
+    dataChannelStatus.textContent = "Closed ❌";
+  };
+  
+  localDataChannel.onerror = (error) => {
+    console.error("Data channel error:", error);
+    dataChannelStatus.textContent = "Error ⚠️";
+  };
+
   localDataChannel.onmessage = (event) => displayMessage('Remote: ' + event.data);
 
   // Set up the remote peer to listen for the data channel
   remotePeerConnection.ondatachannel = (event) => {
     remoteDataChannel = event.channel;
 
-    remoteDataChannel.onopen = () => console.log("Remote data channel open!");
+    remoteDataChannel.onopen = () => {
+      console.log("Remote data channel open!");
+      connectionStatus.textContent = "Connected ✅";
+    };
+
+    remoteDataChannel.onclose = () => {
+      console.log("Remote data channel closed!");
+      connectionStatus.textContent = "Disconnected ❌";
+    };
+
     remoteDataChannel.onmessage = (event) => displayMessage('Remote: ' + event.data);
   };
 
@@ -68,6 +98,8 @@ function displayMessage(message) {
 // Start WebRTC connection (offer/answer exchange)
 async function call() {
   try {
+    connectionStatus.textContent = "Connecting... 🔄";
+    
     const offer = await localPeerConnection.createOffer();
     await localPeerConnection.setLocalDescription(offer);
     await remotePeerConnection.setRemoteDescription(offer);
@@ -77,8 +109,10 @@ async function call() {
     await localPeerConnection.setRemoteDescription(answer);
 
     console.log("WebRTC chat connection established.");
+    connectionStatus.textContent = "Connected ✅";
   } catch (error) {
     console.error("Error setting up WebRTC connection:", error);
+    connectionStatus.textContent = "Connection Failed ❌";
   }
 }
 
@@ -91,6 +125,10 @@ function hangup() {
   remotePeerConnection = null;
   localDataChannel = null;
   remoteDataChannel = null;
+
+  connectionStatus.textContent = "Disconnected ❌";
+  dataChannelStatus.textContent = "Not Available";
+  iceStatus.textContent = "No ICE Candidates Yet";
 
   console.log("Disconnected.");
 }
